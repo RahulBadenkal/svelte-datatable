@@ -33,7 +33,7 @@ import { isEmpty } from '../lib/utils';
     data = [...data].sort((a, b) => {
       const val1 = (a[colKey] || "").toString()
       const val2 = (b[colKey] || "").toString() 
-      return order * (val1.localeCompare(val2))
+      return order * val1.localeCompare(val2)
     })
     headerProps.lastSort = { key: colKey, order }
   }
