@@ -1,9 +1,12 @@
 <!-- Typescript -->
 <script lang="ts">
   // Directives
-  import {clickOutside} from '../directives/clickOutside';
-  import { HTMLElementDimension, getDimension } from '../directives/getDimension'
-import { isEmpty } from '../lib/utils';
+  import { clickOutside } from "../directives/clickOutside";
+  import {
+    HTMLElementDimension,
+    getDimension,
+  } from "../directives/getDimension";
+  import { isEmpty } from "../lib/utils";
 
   // Input data
   let data = [
@@ -17,48 +20,105 @@ import { isEmpty } from '../lib/utils';
     { key: "col3", name: "Column3" },
   ];
 
-
   // Props
-  let colProps: {[key in string]: {
-    hover: boolean; optionsOpen: boolean; dimension: HTMLElementDimension
-  }} = columns.reduce((map, col) => {
-    map[col.key] = {}
-    return map
-  }, {})
-  const headerProps: {dimension?: HTMLElementDimension, lastSort?: { key: string; order: number }} = { }
+  let colProps: {
+    [key in string]: {
+      hover: boolean;
+      optionsOpen: boolean;
+      dimension: HTMLElementDimension;
+    };
+  } = columns.reduce((map, col) => {
+    map[col.key] = {};
+    return map;
+  }, {});
+  let headerProps: {
+    dimension?: HTMLElementDimension;
+    lastSort?: { key: string; order: number };
+  } = {};
 
 
-  // Methods
-  const sortCol = (colKey: string, order:number) => {
-    data = [...data].sort((a, b) => {
-      const val1 = (a[colKey] || "").toString()
-      const val2 = (b[colKey] || "").toString() 
-      return order * val1.localeCompare(val2)
-    })
-    headerProps.lastSort = { key: colKey, order }
+   // Utils
+   const _showOptionsBtn = (headerProps, colProps, colKey: string) => {
+    return colProps[colKey].hover ||
+          colProps[colKey].optionsOpen ||
+          headerProps.lastSort?.key === colKey
   }
 
+  // Reactive statements
+  $: showOptionsBtn = (colKey: string) => {
+    // I know that this fires whenever headerProps/colProps changes, but how does it depend on colKey?
+    return _showOptionsBtn(headerProps, colProps, colKey)  
+  }
+
+  // Events
+  const sortCol = (colKey: string, order: number) => {
+    data = [...data].sort((a, b) => {
+      const val1 = (a[colKey] || "").toString();
+      const val2 = (b[colKey] || "").toString();
+      return order * val1.localeCompare(val2);
+    });
+    headerProps.lastSort = { key: colKey, order };
+  };
 </script>
 
 <!-- Template -->
 <div class="h-screen flex justify-center items-center">
+  <button on:click={e => colProps = colProps}>Click me</button>
   <table class="excel-table">
     <thead>
-      <tr use:getDimension on:sizeChanged={(e) => headerProps.dimension = e.detail}>
+      <tr
+        use:getDimension
+        on:sizeChanged={(e) => (headerProps.dimension = e.detail)}
+      >
         {#each columns as col}
           <th
-            on:mouseenter="{e => colProps[col.key].hover = true}"
-            on:mouseleave="{e => colProps[col.key].hover = false}"
-            class:options-open="{colProps[col.key].optionsOpen}"
+            on:mouseenter={(e) => (colProps[col.key].hover = true)}
+            on:mouseleave={(e) => (colProps[col.key].hover = false)}
+            class:options-open={colProps[col.key].optionsOpen}
           >
             <div class="flex gap-4">
               <span>{col.name}</span>
-              <button class="bg-gray-300 header-options-btn" class:show={colProps[col.key].hover || colProps[col.key].optionsOpen || (headerProps.lastSort?.key === col.key)} on:click={e => colProps[col.key].optionsOpen = !colProps[col.key].optionsOpen}>Opt{headerProps.lastSort?.key === col.key ? (headerProps.lastSort.order === 1 ? '(A)' : '(D)') : ''}</button>
+              <button
+                class="bg-gray-300 header-options-btn"
+                class:show={showOptionsBtn(col.key)}
+                on:click={(e) =>
+                  (colProps[col.key].optionsOpen =
+                    !colProps[col.key].optionsOpen)}
+                >Opt{headerProps.lastSort?.key === col.key
+                  ? headerProps.lastSort.order === 1
+                    ? "(A)"
+                    : "(D)"
+                  : ""}</button
+              >
               {#if colProps[col.key].optionsOpen}
-                <div class="header-options" style="top: {headerProps.dimension.offsetHeight}px" use:clickOutside on:outClick={(e) => { colProps[col.key].optionsOpen = false; e.detail.stopPropagation() }}>
+                <div
+                  class="header-options"
+                  style="top: {headerProps.dimension.offsetHeight}px"
+                  use:clickOutside
+                  on:outClick={(e) => {
+                    colProps[col.key].optionsOpen = false;
+                    e.detail.stopPropagation();
+                  }}
+                >
                   <ul>
-                    <li class="mb-4"><button class="bg-gray-300" class:bg-red-300="{headerProps.lastSort?.key === col.key && headerProps.lastSort?.order === 1}" on:click={e => sortCol(col.key, 1)}>Sort ascending</button></li>
-                    <li><button class="bg-gray-300" class:bg-red-300="{headerProps.lastSort?.key === col.key && headerProps.lastSort?.order === -1}" on:click={e => sortCol(col.key, -1)}>Sort descending</button></li>
+                    <li class="mb-4">
+                      <button
+                        class="bg-gray-300"
+                        class:bg-red-300={headerProps.lastSort?.key ===
+                          col.key && headerProps.lastSort?.order === 1}
+                        on:click={(e) => sortCol(col.key, 1)}
+                        >Sort ascending</button
+                      >
+                    </li>
+                    <li>
+                      <button
+                        class="bg-gray-300"
+                        class:bg-red-300={headerProps.lastSort?.key ===
+                          col.key && headerProps.lastSort?.order === -1}
+                        on:click={(e) => sortCol(col.key, -1)}
+                        >Sort descending</button
+                      >
+                    </li>
                   </ul>
                 </div>
               {/if}
@@ -83,12 +143,13 @@ import { isEmpty } from '../lib/utils';
 <style>
   .excel-table {
   }
-  .excel-table th, td {
+  .excel-table th,
+  td {
     border: 1px solid gray;
   }
-.excel-table th {
-  position: relative;
-}
+  .excel-table th {
+    position: relative;
+  }
   .excel-table th .header-options-btn {
     visibility: hidden;
   }
@@ -101,7 +162,4 @@ import { isEmpty } from '../lib/utils';
     background-color: white;
     max-width: 150px;
   }
-  
-
-
 </style>
