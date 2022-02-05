@@ -49,12 +49,11 @@ import { isEmpty } from '../lib/utils';
           <th
             on:mouseenter="{e => colProps[col.key].hover = true}"
             on:mouseleave="{e => colProps[col.key].hover = false}"
-            class:show-header-options-btn="{colProps[col.key].hover || headerProps.lastSort?.key === col.key}"
             class:options-open="{colProps[col.key].optionsOpen}"
           >
             <div class="flex gap-4">
               <span>{col.name}</span>
-              <button class="bg-gray-300 header-options-btn" on:click={e => colProps[col.key].optionsOpen = !colProps[col.key].optionsOpen}>Opt{headerProps.lastSort?.key === col.key ? (headerProps.lastSort.order === 1 ? '(A)' : '(D)') : ''}</button>
+              <button class="bg-gray-300 header-options-btn" class:show={colProps[col.key].hover || colProps[col.key].optionsOpen || (headerProps.lastSort?.key === col.key)} on:click={e => colProps[col.key].optionsOpen = !colProps[col.key].optionsOpen}>Opt{headerProps.lastSort?.key === col.key ? (headerProps.lastSort.order === 1 ? '(A)' : '(D)') : ''}</button>
               {#if colProps[col.key].optionsOpen}
                 <div class="header-options" style="top: {headerProps.dimension.offsetHeight}px" use:clickOutside on:outClick={(e) => { colProps[col.key].optionsOpen = false; e.detail.stopPropagation() }}>
                   <ul>
@@ -93,10 +92,7 @@ import { isEmpty } from '../lib/utils';
   .excel-table th .header-options-btn {
     visibility: hidden;
   }
-  .excel-table th.show-header-options-btn .header-options-btn {
-    visibility: visible;
-  }
-  .excel-table th.options-open .header-options-btn {
+  .excel-table th .header-options-btn.show {
     visibility: visible;
   }
   .excel-table .header-options {
