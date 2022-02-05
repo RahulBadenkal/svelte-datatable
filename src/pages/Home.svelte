@@ -46,7 +46,7 @@
 
   // Reactive statements
   $: showOptionsBtn = (colKey: string) => {
-    // I know that this fires whenever headerProps/colProps changes, but how does it depend on colKey?
+    // TODO: I know that this fires whenever headerProps/colProps changes, but how does it depend on colKey?
     return _showOptionsBtn(headerProps, colProps, colKey)  
   }
 
