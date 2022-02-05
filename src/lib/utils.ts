@@ -1,4 +1,8 @@
 	// Methods
+  export const isNullOrUndefined = (data: any) => {
+		return data === undefined || data === null
+	}
+
 	export const isEmpty = (data: any, trimString = true) => {
 		return data === undefined || data === null || (trimString ? data.toString().trim() : data.toString()) === '';
 	}
