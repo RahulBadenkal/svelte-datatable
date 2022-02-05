@@ -31,7 +31,7 @@
     map[col.key] = {};
     return map;
   }, {});
-  let headerProps: {
+  const headerProps: {
     dimension?: HTMLElementDimension;
     lastSort?: { key: string; order: number };
   } = {};
@@ -63,7 +63,6 @@
 
 <!-- Template -->
 <div class="h-screen flex justify-center items-center">
-  <button on:click={e => colProps = colProps}>Click me</button>
   <table class="excel-table">
     <thead>
       <tr
