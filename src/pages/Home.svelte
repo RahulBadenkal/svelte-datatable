@@ -1,7 +1,7 @@
 <!-- Typescript -->
 <script lang="ts">
   // Directives
-  import { clickOutside } from "../directives/clickOutside";
+import { clickOutside } from "../directives/clickOutside";
   import {
     HTMLElementDimension,
     getDimension,
@@ -26,19 +26,19 @@
     [key in string]: {
       hover: boolean;
       dimension: HTMLElementDimension;
+      searchText: string;
     };
-  } = columns.reduce((map, col) => {
-    map[col.key] = {};
-    return map;
-  }, {});
-  const headerProps: {
+  } = {}
+  let headerProps: {
     dimension?: HTMLElementDimension;
     lastSort?: { key: string; order: number };
     optionsOpen?: { key: string; hover?: boolean };
     filterOptionsOpen?: { hover?: boolean };
+    searchText?: string;
   } = {};
+  let filteredData: {[key in string]: any}[] = data
 
-  // Utils
+  // Utils (Pure)
   const _showOptionsBtn = (headerProps, colProps, colKey: string) => {
     return (
       colProps[colKey].hover ||
@@ -46,6 +46,13 @@
       headerProps.lastSort?.key === colKey
     );
   };
+ 
+  // Initialisation (run on every input data change)
+  colProps = columns.reduce((map, col) => {
+    map[col.key] = {};
+    return map;
+  }, {}); 
+
 
   // Reactive statements
   $: showOptionsBtn = (colKey: string) => {
@@ -53,9 +60,20 @@
     return _showOptionsBtn(headerProps, colProps, colKey);
   };
 
+
   // Events
+  const closeHeaderOptions = () => {
+    headerProps.searchText = ""
+    headerProps.optionsOpen = undefined
+  }
+
+  const openHeaderOptions = (colKey: string) => {
+    headerProps.searchText = colProps[colKey].searchText
+    headerProps.optionsOpen = { key: colKey }
+  }
+
   const sortCol = (colKey: string, colDtype: string, order: number) => {
-    data = [...data].sort((a, b) => {
+    filteredData = [...filteredData].sort((a, b) => {
       let [val1, val2] = [a[colKey], b[colKey]];
 
       // Empty checks
@@ -71,6 +89,21 @@
     });
     headerProps.lastSort = { key: colKey, order };
   };
+
+  const applyColSearchFilter = (colKey: string) => {
+    // If current search text is same as old search text, continue
+    const oldSearchText = isNullOrUndefined(colProps[colKey].searchText) ? "" : colProps[colKey].searchText
+    const currSearchText = isNullOrUndefined(headerProps.searchText) ? "" : headerProps.searchText
+    if (oldSearchText === currSearchText) return closeHeaderOptions()
+
+    filteredData = data.filter((row) => {
+      if (isNullOrUndefined(row[colKey])) return false
+      return row[colKey].includes(headerProps.searchText)
+    })  // Filter data
+    colProps[colKey].searchText = headerProps.searchText  // Save search text
+    closeHeaderOptions()
+  }
+
 </script>
 
 <!-- Template -->
@@ -93,10 +126,7 @@
                 <button
                   class="bg-gray-300 header-options-btn"
                   class:show={showOptionsBtn(col.key)}
-                  on:click={(e) =>
-                    (headerProps.optionsOpen = headerProps.optionsOpen
-                      ? undefined
-                      : { key: col.key })}
+                  on:click={(e) => openHeaderOptions(col.key)}
                   >Opt{headerProps.lastSort?.key === col.key
                     ? headerProps.lastSort.order === 1
                       ? "(A)"
@@ -111,7 +141,7 @@
                     on:mouseleave={(e) => (headerProps.optionsOpen.hover = false)}
                     use:clickOutside
                     on:outClick={(e) => {
-                      headerProps.optionsOpen = undefined;
+                      closeHeaderOptions()
                       e.detail.stopPropagation();
                     }}
                   >
@@ -166,7 +196,17 @@
                           </div>
                         {/if}
                       </li>
+                      <li>
+                        <input placeholder="Search" bind:value={headerProps.searchText}/>
+                        <div>
+                          List here
+                        </div>
+                      </li>
                     </ul>
+                    <div>
+                      <button on:click={(e) => applyColSearchFilter(col.key)}>Ok</button>
+                      <button on:click={(e) => closeHeaderOptions()}>Cancel</button>
+                    </div>
                   </div>
                 {/if}
               </div>
@@ -175,7 +215,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each data as row}
+        {#each filteredData as row}
           <tr>
             {#each columns as col}
               <td>{row[col.key]}</td>
